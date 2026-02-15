@@ -1,0 +1,1264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iPad Schedule Screen (Landscape)</title>
+  <style>
+    :root{
+      --bg:#0f1115;
+      --text:#f2f2f2;
+      --muted:#b9c0d0;
+      --accent:#90b4ff;
+      --good:#89f7c2;
+      --warn:#ffd36b;
+      --danger:#ff7b7b;
+      --shadow: 0 14px 35px rgba(0,0,0,.35);
+      --radius: 18px;
+      --line: rgba(255,255,255,.10);
+      --maxw: 1200px; /* landscape */
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: "Times New Roman", Times, serif;
+      background: radial-gradient(1200px 700px at 30% 0%, #1a2240 0%, var(--bg) 40%, #0b0c10 100%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding: 16px;
+      overflow-x:hidden;
+    }
+
+    /* LANDSCAPE LAYOUT */
+    .wrap{
+      width:min(var(--maxw), 100%);
+      display:grid;
+      grid-template-columns: 440px 1fr; /* left dashboard, right schedule */
+      gap: 14px;
+      align-items:start;
+    }
+
+    .top{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 18px 18px 14px;
+      position: sticky;
+      top: 10px;
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .clockRow{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      align-items:flex-start;
+    }
+
+    /* BIGGER TIME */
+    .time{
+      font-size: 88px; /* bigger than before */
+      letter-spacing:.8px;
+      line-height:1;
+      font-variant-numeric: tabular-nums;
+      white-space:nowrap;
+    }
+    .seconds{
+      font-size: 30px;
+      opacity:.85;
+      margin-left:12px;
+    }
+
+    .dateBox{
+      color:var(--muted);
+      font-size:16px;
+      line-height:1.25;
+      width:100%;
+    }
+    .dateBox strong{
+      color:var(--text);
+      font-weight:700;
+      display:block;
+      font-size:20px;
+      margin-bottom: 2px;
+    }
+    .lunar{ margin-top: 2px; font-size: 15px; color: var(--muted); }
+    .holidayLine{ margin-top: 6px; font-size: 15px; color: var(--warn); }
+
+    .navRow{
+      display:flex;
+      gap:10px;
+      margin-top:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      width:100%;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor:pointer;
+      font-family: inherit;
+      font-size: 14px;
+      transition: transform .06s ease, background .2s ease, opacity .2s ease;
+      user-select:none;
+      flex: 0 0 auto;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ background: rgba(144,180,255,.16); border-color: rgba(144,180,255,.35); }
+    .btn.danger{ background: rgba(255,123,123,.14); border-color: rgba(255,123,123,.3); }
+    .btn.ghost{ background: transparent; border-color: rgba(255,255,255,.12); }
+
+    .rightCol{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .card{
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding: 12px 14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .cardHead h2{ margin:0; font-size:16px; letter-spacing:.2px; }
+    .small{ color: var(--muted); font-size:13px; }
+    .list{ padding: 10px 10px 12px; display:flex; flex-direction:column; gap:8px; }
+
+    .item{
+      display:grid;
+      grid-template-columns: 92px 1fr auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .t{ font-variant-numeric: tabular-nums; color: var(--accent); font-weight:700; font-size:14px; }
+    .desc{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .desc .title{ font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .desc .meta{ font-size:12px; color: var(--muted); }
+    .chips{ display:flex; gap:6px; align-items:center; justify-content:flex-end; }
+    .chip{
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .chip.good{ border-color: rgba(137,247,194,.35); color: var(--good); background: rgba(137,247,194,.10); }
+    .chip.warn{ border-color: rgba(255,211,107,.35); color: var(--warn); background: rgba(255,211,107,.10); }
+    .chip.danger{ border-color: rgba(255,123,123,.35); color: var(--danger); background: rgba(255,123,123,.10); }
+
+    .tools{ display:flex; gap: 8px; flex-wrap: wrap; }
+    .iconBtn{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-family: inherit;
+      font-size: 13px;
+    }
+    .empty{ padding: 16px 14px; color: var(--muted); font-size: 14px; }
+
+    /* Modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center;
+      padding: 16px; z-index: 120;
+    }
+    .modal{
+      width: min(540px, 100%);
+      background: #0f1220;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modalHead{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+    }
+    .modalHead h3{ margin:0; font-size:16px; }
+    .modalBody{ padding: 14px; display:flex; flex-direction:column; gap:10px; }
+    label{ font-size:12px; color: var(--muted); display:block; margin-bottom:6px; }
+    input, select, textarea{
+      width:100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      outline:none;
+    }
+    textarea{ min-height: 70px; resize: vertical; }
+    .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .modalFoot{
+      padding: 12px 14px 14px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      display:flex; justify-content:flex-end; gap:10px;
+    }
+    .hint{ font-size:12px; color: var(--muted); line-height:1.35; margin-top:2px; }
+    .checkRow{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .checkRow input[type="checkbox"]{ width:auto; margin-top: 4px; }
+
+    /* Calendar panel (smooth slide) */
+    .calendarPanel{
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(10,12,20,.92), rgba(8,10,16,.95));
+      backdrop-filter: blur(14px);
+      z-index: 110;
+      transform: translateY(110%);
+      transition: transform 0.38s cubic-bezier(.2,.9,.2,1);
+      display:flex;
+      justify-content:center;
+      padding: 16px;
+    }
+    .calendarPanel.show{ transform: translateY(0); }
+
+    .calWrap{
+      width:min(980px, 100%);
+      max-height: calc(100vh - 32px);
+      overflow:auto;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,20,.65);
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+    }
+    .calHead{
+      position: sticky;
+      top: 0;
+      background: rgba(10,12,20,.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 14px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      z-index: 1;
+      flex-wrap:wrap;
+    }
+    .calHead h3{ margin:0; font-size: 16px; letter-spacing: .2px; }
+    .calControls{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .monthGrid{
+      padding: 12px;
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+    .dow{
+      color: var(--muted);
+      font-size: 12px;
+      text-align:center;
+      padding: 6px 0 2px;
+    }
+    .dayCell{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding: 10px 10px 8px;
+      min-height: 82px;
+      cursor:pointer;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+    .dayCell:hover{ background: rgba(255,255,255,.06); }
+    .dayCell:active{ transform: translateY(1px); }
+    .dayNumRow{ display:flex; justify-content:space-between; align-items:flex-start; gap: 6px; }
+    .dayNum{
+      font-variant-numeric: tabular-nums;
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 700;
+    }
+    .mini{
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.1;
+      text-align:right;
+      max-width: 70px;
+    }
+    .dots{ display:flex; flex-wrap:wrap; gap: 6px; }
+    .dot{ width: 8px; height: 8px; border-radius: 999px; background: rgba(255,255,255,.25); }
+    .dot.holiday{ background: var(--warn); }
+    .dot.school{ background: var(--danger); }
+    .dot.items{ background: var(--accent); }
+    .todayRing{
+      border-color: rgba(144,180,255,.45) !important;
+      box-shadow: 0 0 0 3px rgba(144,180,255,.14) inset;
+    }
+    .mutedCell{ opacity: .5; }
+
+    /* Responsive fallback: if very narrow, stack */
+    @media (max-width: 900px){
+      .wrap{ display:flex; flex-direction:column; }
+      .top{ position: relative; top: 0; }
+      .time{ font-size: 70px; }
+    }
+    @media (max-width: 420px){
+      .time{ font-size: 60px; }
+      .row2{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- Left Dashboard -->
+    <div class="top">
+      <div class="clockRow">
+        <div class="time" id="timeText">--:--<span class="seconds" id="secText">--</span></div>
+        <div class="dateBox">
+          <strong id="dateText">---</strong>
+          <div class="lunar" id="lunarText">农历 ---</div>
+          <div class="holidayLine" id="holidayText" style="display:none;"></div>
+          <div id="weekText" style="margin-top:6px;">Week of ---</div>
+        </div>
+      </div>
+
+      <div class="navRow">
+        <button class="btn ghost" id="prevDayBtn">◀</button>
+        <button class="btn ghost" id="nextDayBtn">▶</button>
+      </div>
+
+      <div class="pill" style="margin-top:10px;">
+        <div>
+          <div style="color:var(--text); font-size:14px;" id="selectedDayLabel">Today</div>
+          <div class="small" id="selectedDaySub">---</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="btn" id="calendarBtn">📅 Calendar</button>
+          <button class="btn" id="todayBtn">Today</button>
+          <button class="btn primary" id="addBtn">＋ Add</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="cardHead">
+          <h2>Quick</h2>
+          <div class="small">Offline • Local-only</div>
+        </div>
+        <div class="list">
+          <div class="hint">
+            • Weekly items can start “from now” (start date).<br/>
+            • Holidays + school dates are read-only.<br/>
+            • Tap Calendar for month view.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Schedule -->
+    <div class="rightCol">
+      <div class="card">
+        <div class="cardHead">
+          <h2 id="cardTitle">Schedule for Today</h2>
+          <div class="tools">
+            <button class="btn" id="toggleViewBtn">View: Day</button>
+            <button class="btn danger" id="resetBtn" title="Clears all saved schedule items">Reset</button>
+          </div>
+        </div>
+        <div class="list" id="list"></div>
+        <div class="empty" id="empty" style="display:none;">No items yet. Tap <b>＋ Add</b> to create one.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="modalTitle">Add Item</h3>
+        <button class="btn ghost" id="closeModalBtn">✕</button>
+      </div>
+      <div class="modalBody">
+        <div class="row2">
+          <div>
+            <label for="typeSel">Type</label>
+            <select id="typeSel">
+              <option value="weekly">Weekly repeating</option>
+              <option value="oneoff">One-off (specific date)</option>
+            </select>
+          </div>
+          <div>
+            <label for="timeInp">Time</label>
+            <input id="timeInp" type="time" value="09:00" />
+          </div>
+        </div>
+
+        <div class="row2" id="weeklyRow">
+          <div>
+            <label for="dowSel">Day of week</label>
+            <select id="dowSel">
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </div>
+          <div>
+            <label for="tagSel">Tag</label>
+            <select id="tagSel">
+              <option value="routine">Routine</option>
+              <option value="focus">Focus</option>
+              <option value="health">Health</option>
+              <option value="school">School</option>
+              <option value="work">Work</option>
+              <option value="personal">Personal</option>
+              <option value="class">Class</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="repeatStartBox" class="checkRow">
+          <input id="repeatFromNowChk" type="checkbox" />
+          <div style="flex:1;">
+            <div style="font-size:14px; color:var(--text); font-weight:700;">Repeat every week starting from</div>
+            <div class="hint">If enabled, this weekly item only appears on/after the start date.</div>
+            <div style="margin-top:8px;">
+              <label for="repeatStartDateInp">Start date</label>
+              <input id="repeatStartDateInp" type="date" />
+            </div>
+          </div>
+        </div>
+
+        <div class="row2" id="oneoffRow" style="display:none;">
+          <div>
+            <label for="dateInp">Date</label>
+            <input id="dateInp" type="date" />
+          </div>
+          <div>
+            <label for="tagSel2">Tag</label>
+            <select id="tagSel2">
+              <option value="appointment">Appointment</option>
+              <option value="deadline">Deadline</option>
+              <option value="event">Event</option>
+              <option value="task">Task</option>
+              <option value="personal">Personal</option>
+              <option value="class">Class</option>
+              <option value="school">School</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="titleInp">Title</label>
+          <input id="titleInp" type="text" placeholder="e.g., Study math / Gym / Team call" />
+        </div>
+
+        <div>
+          <label for="notesInp">Notes (optional)</label>
+          <textarea id="notesInp" placeholder="Anything you want to remember… (e.g., Ends 22:00)"></textarea>
+        </div>
+
+        <div class="hint" id="editHint" style="display:none;">
+          Editing updates this item only (weekly stays weekly, one-off stays one-off).
+        </div>
+      </div>
+      <div class="modalFoot">
+        <button class="btn ghost" id="cancelBtn">Cancel</button>
+        <button class="btn danger" id="deleteBtn" style="display:none;">Delete</button>
+        <button class="btn primary" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Panel -->
+  <div class="calendarPanel" id="calendarPanel" aria-hidden="true">
+    <div class="calWrap">
+      <div class="calHead">
+        <h3 id="calTitle">Calendar</h3>
+        <div class="calControls">
+          <button class="btn ghost" id="calPrevBtn">◀</button>
+          <button class="btn" id="calTodayBtn">Today</button>
+          <button class="btn ghost" id="calNextBtn">▶</button>
+          <button class="btn primary" id="calCloseBtn">Close</button>
+        </div>
+      </div>
+      <div class="monthGrid" id="monthGrid"></div>
+      <div style="padding: 0 14px 14px;">
+        <div class="hint" id="calHint"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/**
+ * Landscape version:
+ * - Two columns: left = clock/date, right = schedule
+ * - Bigger time
+ * - Lunar date (农历) via Intl Chinese calendar (offline)
+ * - Holidays (Chinese + major Western)
+ * - School dates (major breaks; edit SCHOOL_DATES to add more)
+ * - Smooth month calendar panel
+ */
+
+const KEY = "ipad_schedule_v3_landscape";
+
+function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+function pad(n){ return String(n).padStart(2,"0"); }
+function ymd(d){
+  const x = new Date(d);
+  return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`;
+}
+function parseYmd(s){
+  const [y,m,d] = s.split("-").map(Number);
+  const dt = new Date(y, (m||1)-1, d||1);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+function startOfWeek(d){
+  const x = new Date(d);
+  x.setHours(0,0,0,0);
+  const day = x.getDay();
+  x.setDate(x.getDate() - day);
+  return x;
+}
+function formatDateLong(d){
+  return d.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+}
+function formatWeekOf(d){
+  const start = startOfWeek(d);
+  const end = new Date(start); end.setDate(end.getDate()+6);
+  const a = start.toLocaleDateString(undefined, { month:"short", day:"numeric" });
+  const b = end.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
+  return `Week of ${a} – ${b}`;
+}
+function isToday(d){ return ymd(d) === ymd(new Date()); }
+function sortByTime(a,b){ return (a.time||"00:00").localeCompare(b.time||"00:00"); }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
+}
+function dateGte(aYmd, bYmd){ return (aYmd||"").localeCompare(bYmd||"") >= 0; }
+function sameYmd(a,b){ return ymd(a) === ymd(b); }
+
+/* Your presets */
+function seedWeekly(){
+  return [
+    { id: uid(), dow: 3, time: "21:00", title: "Erhu class", notes: "Ends 22:00", tag:"class" },
+    { id: uid(), dow: 4, time: "21:00", title: "Erhu class", notes: "Ends 22:00", tag:"class" },
+    { id: uid(), dow: 0, time: "21:00", title: "Erhu class", notes: "Ends 22:00", tag:"class" },
+    { id: uid(), dow: 0, time: "09:30", title: "English class", notes: "Ends 11:30", tag:"class" }
+  ];
+}
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return { weeklyItems: seedWeekly(), oneOffItems: [] };
+    const data = JSON.parse(raw);
+    return {
+      weeklyItems: Array.isArray(data.weeklyItems) ? data.weeklyItems : seedWeekly(),
+      oneOffItems: Array.isArray(data.oneOffItems) ? data.oneOffItems : []
+    };
+  }catch{
+    return { weeklyItems: seedWeekly(), oneOffItems: [] };
+  }
+}
+function saveData(){ localStorage.setItem(KEY, JSON.stringify(state.data)); }
+
+/* Lunar */
+function getLunarLabel(date){
+  try{
+    const fmt = new Intl.DateTimeFormat('zh-u-ca-chinese', { year:'numeric', month:'long', day:'numeric' });
+    return fmt.format(date);
+  }catch{
+    return "农历不可用";
+  }
+}
+
+/* Holidays */
+function fixedHolidays(y, m, d){
+  const key = `${m}-${d}`;
+  const map = {
+    "1-1": ["New Year's Day"],
+    "2-14": ["Valentine's Day"],
+    "10-31": ["Halloween"],
+    "12-25": ["Christmas Day"],
+    "12-26": ["Boxing Day"],
+    "7-4": ["Independence Day (US)"],
+  };
+  return map[key] || [];
+}
+function easterDate(year){
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19*a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2*e + 2*i - h - k) % 7;
+  const m = Math.floor((a + 11*h + 22*l) / 451);
+  const month = Math.floor((h + l - 7*m + 114) / 31);
+  const day = ((h + l - 7*m + 114) % 31) + 1;
+  const dt = new Date(year, month-1, day);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+function qingmingDate(year){
+  const y = year;
+  let day;
+  if (y >= 2001 && y <= 2099){
+    day = Math.floor((y * 0.2422 + 4.81) - Math.floor((y - 1) / 4));
+  } else {
+    day = 4;
+  }
+  const dt = new Date(year, 3, day);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+function lunarFestivalsFromLabel(lunarLabel){
+  const f = [];
+  const s = String(lunarLabel);
+  if (s.includes("正月初一")) f.push("春节 (Chinese New Year)");
+  if (s.includes("正月十五")) f.push("元宵节 (Lantern Festival)");
+  if (s.includes("五月初五")) f.push("端午节 (Dragon Boat Festival)");
+  if (s.includes("八月十五")) f.push("中秋节 (Mid-Autumn Festival)");
+  return f;
+}
+function holidayNamesForDate(date){
+  const y = date.getFullYear();
+  const m = date.getMonth()+1;
+  const d = date.getDate();
+  const out = [];
+  out.push(...fixedHolidays(y,m,d));
+  if (sameYmd(date, easterDate(y))) out.push("Easter Sunday");
+  if (sameYmd(date, qingmingDate(y))) out.push("清明节 (Qingming)");
+  out.push(...lunarFestivalsFromLabel(getLunarLabel(date)));
+  if (m === 10 && d === 1) out.push("国庆节 (China National Day)");
+  return Array.from(new Set(out));
+}
+
+/* School dates (major / no-school) */
+const SCHOOL_DATES = [
+  { date: "2025-08-04", title: "First day for students", kind:"school" },
+  { date: "2025-08-09", title: "National Day (SG) – No school", kind:"schoolBreak" },
+  { range: ["2025-11-26","2025-11-28"], title: "Thanksgiving break", kind:"schoolBreak" },
+  { range: ["2025-12-16","2026-01-09"], title: "Winter break – No school", kind:"schoolBreak" },
+  { date: "2026-01-26", title: "Faculty inservice day (No school)", kind:"school" },
+  { range: ["2026-02-05","2026-02-13"], title: "Midwinter recess – No school", kind:"schoolBreak" },
+  { range: ["2026-02-16","2026-02-18"], title: "Chinese New Year – No school", kind:"schoolBreak" },
+  { range: ["2026-03-23","2026-03-27"], title: "Spring break – No school", kind:"schoolBreak" },
+  { date: "2026-04-03", title: "Good Friday – No school", kind:"schoolBreak" },
+  { date: "2026-05-25", title: "Memorial Day – No school", kind:"schoolBreak" }
+];
+function schoolEventsForYmd(dateYmd){
+  const out = [];
+  for(const e of SCHOOL_DATES){
+    if(e.date && e.date === dateYmd) out.push(e);
+    if(e.range){
+      const [a,b] = e.range;
+      if(dateYmd >= a && dateYmd <= b) out.push(e);
+    }
+  }
+  return out;
+}
+
+/* State */
+const state = {
+  data: loadData(),
+  selectedDate: new Date(),
+  viewMode: "day",
+  editing: null,
+  calMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+};
+
+/* Elements */
+const timeText = document.getElementById("timeText");
+const secText  = document.getElementById("secText");
+const dateText = document.getElementById("dateText");
+const weekText = document.getElementById("weekText");
+const lunarText = document.getElementById("lunarText");
+const holidayText = document.getElementById("holidayText");
+
+const selectedDayLabel = document.getElementById("selectedDayLabel");
+const selectedDaySub = document.getElementById("selectedDaySub");
+const cardTitle = document.getElementById("cardTitle");
+const listEl = document.getElementById("list");
+const emptyEl = document.getElementById("empty");
+
+const prevDayBtn = document.getElementById("prevDayBtn");
+const nextDayBtn = document.getElementById("nextDayBtn");
+const todayBtn = document.getElementById("todayBtn");
+const addBtn = document.getElementById("addBtn");
+const toggleViewBtn = document.getElementById("toggleViewBtn");
+const resetBtn = document.getElementById("resetBtn");
+const calendarBtn = document.getElementById("calendarBtn");
+
+/* Modal */
+const modalBack = document.getElementById("modalBack");
+const modalTitle = document.getElementById("modalTitle");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const deleteBtn = document.getElementById("deleteBtn");
+const saveBtn = document.getElementById("saveBtn");
+const editHint = document.getElementById("editHint");
+
+const typeSel = document.getElementById("typeSel");
+const timeInp = document.getElementById("timeInp");
+const dowSel = document.getElementById("dowSel");
+const dateInp = document.getElementById("dateInp");
+const titleInp = document.getElementById("titleInp");
+const notesInp = document.getElementById("notesInp");
+const tagSel = document.getElementById("tagSel");
+const tagSel2 = document.getElementById("tagSel2");
+
+const weeklyRow = document.getElementById("weeklyRow");
+const oneoffRow = document.getElementById("oneoffRow");
+
+const repeatStartBox = document.getElementById("repeatStartBox");
+const repeatFromNowChk = document.getElementById("repeatFromNowChk");
+const repeatStartDateInp = document.getElementById("repeatStartDateInp");
+
+/* Calendar */
+const calendarPanel = document.getElementById("calendarPanel");
+const calTitle = document.getElementById("calTitle");
+const monthGrid = document.getElementById("monthGrid");
+const calHint = document.getElementById("calHint");
+const calPrevBtn = document.getElementById("calPrevBtn");
+const calNextBtn = document.getElementById("calNextBtn");
+const calTodayBtn = document.getElementById("calTodayBtn");
+const calCloseBtn = document.getElementById("calCloseBtn");
+
+/* Tick */
+function tick(){
+  const now = new Date();
+  const hh = pad(now.getHours());
+  const mm = pad(now.getMinutes());
+  const ss = pad(now.getSeconds());
+  timeText.firstChild.textContent = `${hh}:${mm}`;
+  secText.textContent = ss;
+
+  dateText.textContent = now.toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric" });
+  weekText.textContent = formatWeekOf(now);
+  lunarText.textContent = "农历 " + getLunarLabel(now);
+
+  const names = holidayNamesForDate(now);
+  const school = schoolEventsForYmd(ymd(now)).map(x=>x.title);
+  const combined = [...names, ...school];
+  if(combined.length){
+    holidayText.style.display = "block";
+    holidayText.textContent = combined.slice(0,2).join(" • ") + (combined.length > 2 ? ` • +${combined.length-2}` : "");
+  }else{
+    holidayText.style.display = "none";
+    holidayText.textContent = "";
+  }
+}
+setInterval(tick, 250);
+tick();
+
+/* Rendering */
+function tagChip(tag, type, extraClass=""){
+  const t = (tag||"").toLowerCase();
+  const nice = tag ? tag[0].toUpperCase()+tag.slice(1) : "Tag";
+  let cls = "";
+  if(extraClass) cls = extraClass;
+  else if (t==="deadline") cls = "warn";
+  else if (type==="weekly") cls = "good";
+  return `<span class="chip ${cls}">${nice}</span>`;
+}
+
+function updateSelectedHeader(){
+  const d = state.selectedDate;
+  selectedDayLabel.textContent = isToday(d) ? "Today" : d.toLocaleDateString(undefined, { weekday:"long" });
+  selectedDaySub.textContent = formatDateLong(d);
+  if(state.viewMode === "day"){
+    cardTitle.textContent = `Schedule for ${isToday(d) ? "Today" : d.toLocaleDateString(undefined, { weekday:"long" })}`;
+  } else {
+    cardTitle.textContent = `Week View • ${formatWeekOf(d)}`;
+  }
+}
+
+function itemsForDate(d){
+  const dow = d.getDay();
+  const dk = ymd(d);
+
+  const weekly = state.data.weeklyItems
+    .filter(it => it.dow === dow)
+    .filter(it => !it.startDate || dateGte(dk, it.startDate))
+    .map(it => ({...it, _type:"weekly"}));
+
+  const oneoff = state.data.oneOffItems
+    .filter(it => it.date === dk)
+    .map(it => ({...it, _type:"oneoff"}));
+
+  const hol = holidayNamesForDate(d).map((name, idx) => ({
+    id: `holiday_${dk}_${idx}`,
+    time: "—",
+    title: name,
+    notes: "",
+    tag: "holiday",
+    _type: "readonly_holiday"
+  }));
+
+  const school = schoolEventsForYmd(dk).map((e, idx) => ({
+    id: `school_${dk}_${idx}`,
+    time: "—",
+    title: e.title,
+    notes: "",
+    tag: e.kind === "schoolBreak" ? "no school" : "school",
+    _type: "readonly_school",
+    _schoolKind: e.kind
+  }));
+
+  const timed = [...weekly, ...oneoff].sort(sortByTime);
+  return [...timed, ...school, ...hol];
+}
+
+function itemsForWeek(d){
+  const start = startOfWeek(d);
+  const days = [];
+  for(let i=0;i<7;i++){
+    const x = new Date(start);
+    x.setDate(x.getDate()+i);
+    days.push(x);
+  }
+  return days.map(day => ({ day, items: itemsForDate(day) }));
+}
+
+function renderItem(it){
+  const el = document.createElement("div");
+  el.className = "item";
+  const isReadOnly = it._type.startsWith("readonly");
+  const typeLabel =
+    it._type === "weekly" ? "Weekly" :
+    it._type === "oneoff" ? "One-off" :
+    it._type === "readonly_holiday" ? "Holiday" :
+    "School";
+
+  const extra = [];
+  if(it._type === "weekly" && it.startDate) extra.push(`From ${it.startDate}`);
+  if(it._type === "oneoff") extra.push(it.date || "");
+
+  let chipClass = "";
+  if(it._type === "readonly_holiday") chipClass = "warn";
+  if(it._type === "readonly_school") chipClass = (it._schoolKind === "schoolBreak") ? "danger" : "warn";
+
+  el.innerHTML = `
+    <div class="t">${it.time || "--:--"}</div>
+    <div class="desc">
+      <div class="title">${escapeHtml(it.title || "(no title)")}</div>
+      <div class="meta">
+        ${typeLabel}${extra.length ? " • " + extra.join(" • ") : ""}
+        ${it.notes ? " • " + escapeHtml(it.notes) : ""}
+      </div>
+    </div>
+    <div class="chips">
+      ${tagChip(it.tag, it._type, chipClass)}
+      ${isReadOnly ? "" : `<button class="iconBtn" title="Edit">✎</button>`}
+    </div>
+  `;
+
+  if(!isReadOnly){
+    el.querySelector(".iconBtn").addEventListener("click", () => openEdit(it._type, it.id));
+  }
+  return el;
+}
+
+function render(){
+  updateSelectedHeader();
+  listEl.innerHTML = "";
+  emptyEl.style.display = "none";
+
+  if(state.viewMode === "day"){
+    const items = itemsForDate(state.selectedDate);
+    if(items.length === 0){ emptyEl.style.display = "block"; return; }
+    for(const it of items) listEl.appendChild(renderItem(it));
+  } else {
+    const week = itemsForWeek(state.selectedDate);
+    let any = false;
+    for(const block of week){
+      const dayHeader = document.createElement("div");
+      dayHeader.style.margin = "8px 4px 2px";
+      dayHeader.style.color = "var(--muted)";
+      dayHeader.style.fontSize = "13px";
+      dayHeader.innerHTML = `<span style="color:var(--text); font-weight:700;">${block.day.toLocaleDateString(undefined,{weekday:"long"})}</span>
+        <span style="margin-left:8px;">${block.day.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span>`;
+      listEl.appendChild(dayHeader);
+
+      if(block.items.length === 0){
+        const none = document.createElement("div");
+        none.className = "empty";
+        none.style.display = "block";
+        none.style.margin = "0 4px 8px";
+        none.textContent = "—";
+        listEl.appendChild(none);
+      } else {
+        any = true;
+        for(const it of block.items) listEl.appendChild(renderItem(it));
+      }
+    }
+    if(!any) emptyEl.style.display = "block";
+  }
+}
+
+/* Nav */
+prevDayBtn.addEventListener("click", () => { state.selectedDate.setDate(state.selectedDate.getDate()-1); render(); });
+nextDayBtn.addEventListener("click", () => { state.selectedDate.setDate(state.selectedDate.getDate()+1); render(); });
+todayBtn.addEventListener("click", () => { state.selectedDate = new Date(); render(); });
+
+toggleViewBtn.addEventListener("click", () => {
+  state.viewMode = (state.viewMode === "day") ? "week" : "day";
+  toggleViewBtn.textContent = `View: ${state.viewMode === "day" ? "Day" : "Week"}`;
+  render();
+});
+
+resetBtn.addEventListener("click", () => {
+  const ok = confirm("This will delete all saved schedule items on this iPad (your weekly/one-off items). Continue?");
+  if(!ok) return;
+  localStorage.removeItem(KEY);
+  state.data = loadData();
+  render();
+  renderCalendar();
+});
+
+/* Modal */
+function openModal(){ modalBack.style.display = "flex"; }
+function closeModal(){ modalBack.style.display = "none"; state.editing = null; }
+
+function syncTypeUI(){
+  const type = typeSel.value;
+  weeklyRow.style.display = (type === "weekly") ? "grid" : "none";
+  repeatStartBox.style.display = (type === "weekly") ? "flex" : "none";
+  oneoffRow.style.display = (type === "oneoff") ? "grid" : "none";
+}
+typeSel.addEventListener("change", syncTypeUI);
+
+repeatFromNowChk.addEventListener("change", () => {
+  repeatStartDateInp.disabled = !repeatFromNowChk.checked;
+});
+
+addBtn.addEventListener("click", () => {
+  state.editing = null;
+  modalTitle.textContent = "Add Item";
+  deleteBtn.style.display = "none";
+  editHint.style.display = "none";
+
+  typeSel.value = "weekly";
+  timeInp.value = "09:00";
+  dowSel.value = String(state.selectedDate.getDay());
+  dateInp.value = ymd(state.selectedDate);
+  titleInp.value = "";
+  notesInp.value = "";
+  tagSel.value = "routine";
+  tagSel2.value = "task";
+
+  repeatFromNowChk.checked = false;
+  repeatStartDateInp.value = ymd(state.selectedDate);
+  repeatStartDateInp.disabled = true;
+
+  syncTypeUI();
+  openModal();
+  titleInp.focus();
+});
+
+closeModalBtn.addEventListener("click", closeModal);
+cancelBtn.addEventListener("click", closeModal);
+modalBack.addEventListener("click", (e) => { if(e.target === modalBack) closeModal(); });
+
+function openEdit(type, id){
+  const arr = (type === "weekly") ? state.data.weeklyItems : state.data.oneOffItems;
+  const it = arr.find(x => x.id === id);
+  if(!it) return;
+
+  state.editing = { type, id };
+  modalTitle.textContent = "Edit Item";
+  deleteBtn.style.display = "inline-block";
+  editHint.style.display = "block";
+
+  typeSel.value = type;
+  timeInp.value = it.time || "09:00";
+  titleInp.value = it.title || "";
+  notesInp.value = it.notes || "";
+
+  if(type === "weekly"){
+    dowSel.value = String(it.dow);
+    tagSel.value = it.tag || "routine";
+    if(it.startDate){
+      repeatFromNowChk.checked = true;
+      repeatStartDateInp.value = it.startDate;
+      repeatStartDateInp.disabled = false;
+    } else {
+      repeatFromNowChk.checked = false;
+      repeatStartDateInp.value = ymd(state.selectedDate);
+      repeatStartDateInp.disabled = true;
+    }
+  } else {
+    dateInp.value = it.date || ymd(state.selectedDate);
+    tagSel2.value = it.tag || "task";
+  }
+
+  syncTypeUI();
+  openModal();
+  titleInp.focus();
+}
+
+deleteBtn.addEventListener("click", () => {
+  if(!state.editing) return;
+  const ok = confirm("Delete this item?");
+  if(!ok) return;
+
+  if(state.editing.type === "weekly"){
+    state.data.weeklyItems = state.data.weeklyItems.filter(x => x.id !== state.editing.id);
+  } else {
+    state.data.oneOffItems = state.data.oneOffItems.filter(x => x.id !== state.editing.id);
+  }
+  saveData();
+  closeModal();
+  render();
+  renderCalendar();
+});
+
+saveBtn.addEventListener("click", () => {
+  const type = typeSel.value;
+  const time = timeInp.value || "09:00";
+  const title = (titleInp.value || "").trim();
+  const notes = (notesInp.value || "").trim();
+
+  if(!title){
+    alert("Please enter a title.");
+    titleInp.focus();
+    return;
+  }
+
+  if(state.editing){
+    const { type: etype, id } = state.editing;
+    const arr = (etype === "weekly") ? state.data.weeklyItems : state.data.oneOffItems;
+    const it = arr.find(x => x.id === id);
+    if(!it) return;
+
+    it.time = time;
+    it.title = title;
+    it.notes = notes;
+
+    if(etype === "weekly"){
+      it.dow = Number(dowSel.value);
+      it.tag = tagSel.value;
+      if(repeatFromNowChk.checked){
+        it.startDate = repeatStartDateInp.value || ymd(state.selectedDate);
+      } else {
+        delete it.startDate;
+      }
+    } else {
+      it.date = dateInp.value || ymd(state.selectedDate);
+      it.tag = tagSel2.value;
+    }
+  } else {
+    if(type === "weekly"){
+      const item = { id: uid(), dow: Number(dowSel.value), time, title, notes, tag: tagSel.value };
+      if(repeatFromNowChk.checked){
+        item.startDate = repeatStartDateInp.value || ymd(state.selectedDate);
+      }
+      state.data.weeklyItems.push(item);
+    } else {
+      const date = dateInp.value || ymd(state.selectedDate);
+      state.data.oneOffItems.push({ id: uid(), date, time, title, notes, tag: tagSel2.value });
+    }
+  }
+
+  state.data.weeklyItems.sort((a,b)=> (a.dow-b.dow) || sortByTime(a,b));
+  state.data.oneOffItems.sort((a,b)=> (a.date.localeCompare(b.date)) || sortByTime(a,b));
+
+  saveData();
+  closeModal();
+  render();
+  renderCalendar();
+});
+
+/* Calendar panel */
+function openCalendar(){
+  state.calMonth = new Date(state.selectedDate.getFullYear(), state.selectedDate.getMonth(), 1);
+  renderCalendar();
+  calendarPanel.classList.add("show");
+  calendarPanel.setAttribute("aria-hidden","false");
+}
+function closeCalendar(){
+  calendarPanel.classList.remove("show");
+  calendarPanel.setAttribute("aria-hidden","true");
+}
+calendarBtn.addEventListener("click", openCalendar);
+calCloseBtn.addEventListener("click", closeCalendar);
+calendarPanel.addEventListener("click", (e) => { if(e.target === calendarPanel) closeCalendar(); });
+
+calPrevBtn.addEventListener("click", () => {
+  state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth()-1, 1);
+  renderCalendar();
+});
+calNextBtn.addEventListener("click", () => {
+  state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth()+1, 1);
+  renderCalendar();
+});
+calTodayBtn.addEventListener("click", () => {
+  state.calMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  renderCalendar();
+});
+
+function monthName(d){
+  return d.toLocaleDateString(undefined, { month:"long", year:"numeric" });
+}
+function hasUserItemsOnYmd(dk){
+  const d = parseYmd(dk);
+  const dow = d.getDay();
+  const weekly = state.data.weeklyItems.some(it => it.dow === dow && (!it.startDate || dateGte(dk, it.startDate)));
+  const oneoff = state.data.oneOffItems.some(it => it.date === dk);
+  return weekly || oneoff;
+}
+
+function renderCalendar(){
+  const m0 = new Date(state.calMonth);
+  const y = m0.getFullYear();
+  const m = m0.getMonth();
+
+  calTitle.textContent = monthName(m0);
+  monthGrid.innerHTML = "";
+
+  const dows = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  for(const w of dows){
+    const el = document.createElement("div");
+    el.className = "dow";
+    el.textContent = w;
+    monthGrid.appendChild(el);
+  }
+
+  const first = new Date(y, m, 1);
+  const firstDow = first.getDay();
+
+  let cursor = new Date(y, m, 1 - firstDow);
+  for(let i=0;i<42;i++){
+    const cellDate = new Date(cursor);
+    const dk = ymd(cellDate);
+    const inMonth = (cellDate.getMonth() === m);
+
+    const lunarMini = (() => {
+      const s = getLunarLabel(cellDate);
+      const parts = s.split("月");
+      if(parts.length >= 2){
+        const dayPart = parts[parts.length-1].trim();
+        return dayPart.length > 4 ? dayPart.slice(-4) : dayPart;
+      }
+      return "";
+    })();
+
+    const hol = holidayNamesForDate(cellDate);
+    const school = schoolEventsForYmd(dk);
+    const hasItems = hasUserItemsOnYmd(dk);
+
+    const cell = document.createElement("div");
+    cell.className = "dayCell";
+    if(!inMonth) cell.classList.add("mutedCell");
+    if(isToday(cellDate)) cell.classList.add("todayRing");
+
+    cell.innerHTML = `
+      <div class="dayNumRow">
+        <div class="dayNum">${cellDate.getDate()}</div>
+        <div class="mini">${escapeHtml(lunarMini)}</div>
+      </div>
+      <div class="dots">
+        ${hol.length ? `<span class="dot holiday" title="${escapeHtml(hol.join(", "))}"></span>` : ""}
+        ${school.length ? `<span class="dot school" title="${escapeHtml(school.map(s=>s.title).join(", "))}"></span>` : ""}
+        ${hasItems ? `<span class="dot items" title="Your items"></span>` : ""}
+      </div>
+    `;
+
+    cell.addEventListener("click", () => {
+      state.selectedDate = cellDate;
+      render();
+      closeCalendar();
+    });
+
+    monthGrid.appendChild(cell);
+    cursor.setDate(cursor.getDate()+1);
+  }
+
+  calHint.textContent =
+    "Tip: Tap a date to jump to it. Dots: Holiday • School/No school • Your items.";
+}
+
+/* Init */
+toggleViewBtn.textContent = `View: ${state.viewMode === "day" ? "Day" : "Week"}`;
+render();
+
+/* Keyboard shortcuts */
+window.addEventListener("keydown", (e) => {
+  if(modalBack.style.display === "flex") return;
+  if(calendarPanel.classList.contains("show")){
+    if(e.key === "Escape") closeCalendar();
+    return;
+  }
+  if(e.key === "n" || e.key === "N"){ addBtn.click(); }
+  if(e.key === "c" || e.key === "C"){ openCalendar(); }
+  if(e.key === "ArrowLeft"){ prevDayBtn.click(); }
+  if(e.key === "ArrowRight"){ nextDayBtn.click(); }
+});
+</script>
+</body>
+</html>
